@@ -1,0 +1,42 @@
+# 라이브러리 저장
+pip freeze > requirements.txt
+pipreqs . --force --encoding=utf-8
+
+# 앞으로 이렇게만 가능
+git add .
+git commit -m "테스트 파일 생성"
+git push
+
+
+# 가상환경 재설치
+# 윈도우
+Remove-Item -Recurse -Force .venv
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+# 우분투
+rm -rf .venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 깃 로그인
+git config --global user.name "yongbot"
+git config --global user.email "ymhan0724@gmail.com"
+
+# 깃 초기화
+git init
+git remote add origin https://github.com/Doctor-Pill/DrPill-server.git
+git config --global credential.helper store
+git add .
+git commit -m "깃로그인 자동화"
+git branch -M main
+git push -u origin main
+# 강제 푸시
+git push -f origin main
+# 푸시 확인
+git log --oneline --graph
+
+
+# 주소 변경
+git remote set-url origin https://github.com/Doctor-Pill/DrPill_edge.git
