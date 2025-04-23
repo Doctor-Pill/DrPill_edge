@@ -1,6 +1,7 @@
 # 라이브러리 저장
 pip freeze > requirements.txt
-pipreqs . --force --encoding=utf-8
+pipreqs . --force --ignore .venv,__pycache__,build --encoding=utf-8
+
 
 # 앞으로 이렇게만 가능
 git add .
@@ -16,7 +17,7 @@ python -m venv .venv
 pip install -r requirements.txt
 # 우분투
 rm -rf .venv
-python3 -m venv .venv
+python3 -m venv .venv --system-site-packages
 source .venv/bin/activate
 pip install -r requirements.txt
 
