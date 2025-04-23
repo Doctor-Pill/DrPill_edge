@@ -7,7 +7,7 @@ if __name__ == "__main__":
     watcher = KeywordWatcher()
 
     watcher.start()   # 감지 시작
-    time.sleep(30)    # 30초 동안 감지 유지
+    time.sleep(20)    # 20초 동안 감지 유지
     watcher.stop()    # 감지 종료
 
     time.sleep(5)
