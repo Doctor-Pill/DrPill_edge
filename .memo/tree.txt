@@ -1,0 +1,10 @@
+DrPill_edge/
+├── main.py                         ← 실행 진입점
+├── requirements.txt                ← 필요 패키지 목록
+└── src/
+    ├── utils/
+    │   ├── __init__.py
+    │   └── recorder.py            ← 마이크 녹음 함수
+    └── signal/
+        ├── __init__.py
+        └── sender.py              ← `.wav` 파일 서버로 전송

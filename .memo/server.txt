@@ -1,0 +1,10 @@
+# server html check
+curl http://192.168.0.10:5000
+
+# 
+chromium-browser --no-sandbox http://192.168.0.10:5000
+# 
+chromium-browser --kiosk http://192.168.0.10:5000 --no-sandbox &
+
+#
+pkill chromium
