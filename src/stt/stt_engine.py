@@ -1,9 +1,18 @@
 import speech_recognition as sr
 
 def listen(timeout: int = 5, phrase_time_limit: int = 5) -> str | None:
+    """
+    실시간으로 마이크 입력을 받아 음성을 텍스트로 변환합니다.
+
+    :param timeout: 말을 시작할 때까지 대기 시간 (초)
+    :param phrase_time_limit: 말할 수 있는 최대 시간 (초)
+    :return: 인식된 텍스트 또는 None
+    """
     recognizer = sr.Recognizer()
 
     try:
+        # 디바이스 인덱스를 명시하고 싶다면:
+        # with sr.Microphone(device_index=3) as source:
         with sr.Microphone() as source:
             print("🎤 말해주세요 (녹음 중)...")
             recognizer.adjust_for_ambient_noise(source, duration=0.5)

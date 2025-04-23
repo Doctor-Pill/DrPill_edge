@@ -20,4 +20,4 @@ def record_audio(filename='recorded.wav', duration=5, samplerate=16000):
         print(f"❌ 녹음 중 오류 발생: {e}")
 
 
-record_audio(filename='my_voice.wav', duration=4)
+

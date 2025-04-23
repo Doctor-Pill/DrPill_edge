@@ -1,8 +1,6 @@
-from src.signal.sender import send_signal
-from src.utils.recorder import record_audio
+from src.stt.stt_engine import listen
 
 if __name__ == '__main__':
-    # print("📡 서버에 신호 전송 시도 중...")
-    # send_signal()
-
-    record_audio(filename='my_voice.wav', duration=4)
+    result = listen()
+    if result:
+        print("✅ 최종 인식 결과:", result)
