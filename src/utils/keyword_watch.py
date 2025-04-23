@@ -30,8 +30,9 @@ class KeywordWatcher:
                 data = self.q.get()
                 if self.recognizer.AcceptWaveform(data):
                     result = json.loads(self.recognizer.Result())
+                    text = result.get("text", "")
                     print("🎤 인식된 텍스트:", text)
-                    text = result.get("text", "").replace(" ", "").lower()
+                    text = text.replace(" ", "").lower()
                     if any(keyword in text for keyword in ["doctorpill", "drphil"]):
                         print("🎯 'doctorpill' 감지! 녹음 실행")
                         record_audio("triggered.wav")
