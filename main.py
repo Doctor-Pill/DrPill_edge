@@ -1,5 +1,5 @@
-# main.py
-from src.stream.stream_server import app
+from src.signal.sender import send_signal
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    print("📡 서버에 신호 전송 시도 중...")
+    send_signal()

@@ -29,7 +29,7 @@ git init
 git remote add origin https://github.com/Doctor-Pill/DrPill-server.git
 git config --global credential.helper store
 git add .
-git commit -m "깃로그인 자동화"
+git commit -m "초기 푸시"
 git branch -M main
 git push -u origin main
 # 강제 푸시
