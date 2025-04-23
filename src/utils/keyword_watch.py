@@ -32,7 +32,7 @@ class KeywordWatcher:
                     result = json.loads(self.recognizer.Result())
                     text = result.get("text", "")
                     print("🎤 인식된 텍스트:", text)
-                    if "닥터필" in text:
+                    if "닥터필" in text.replace(" ", "").lower():
                         print("🎯 '닥터필' 감지! 녹음 실행")
                         record_audio("triggered.wav")
                         upload_audio_file("triggered.wav")

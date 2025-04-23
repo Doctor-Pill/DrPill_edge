@@ -8,3 +8,6 @@ DrPill_edge/
     └── signal/
         ├── __init__.py
         └── sender.py              ← `.wav` 파일 서버로 전송
+
+
+pip show python-socketio
