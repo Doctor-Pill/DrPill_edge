@@ -23,9 +23,10 @@ class KeywordWatcher:
         self.q.put(bytes(indata))
 
     def _watch_loop(self):
-        with sd.RawInputStream(samplerate=self.rate, blocksize=8000, dtype='int16',
+        with sd.RawInputStream(samplerate=self.rate, blocksize=4000, dtype='int16',
                                channels=1, callback=self._callback):
-            print("🎧 'doctorpill' 키워드 감지 시작 (실시간)...")
+            keyword_list = ["hello", "doctorpill", "drphil"]
+            print(f"🎧 {keyword_list} 키워드 감지 시작 (실시간)...")
             while self.running.is_set():
                 data = self.q.get()
                 if self.recognizer.AcceptWaveform(data):
@@ -33,8 +34,8 @@ class KeywordWatcher:
                     text = result.get("text", "")
                     print("🎤 인식된 텍스트:", text)
                     text = text.replace(" ", "").lower()
-                    if any(keyword in text for keyword in ["doctorpill", "drphil"]):
-                        print("🎯 'doctorpill' 감지! 녹음 실행")
+                    if any(keyword in text for keyword in ["hello", "doctorpill", "drphil"]):
+                        print("🎯 keyword 감지! 녹음 실행")
                         record_audio("triggered.wav")
                         upload_audio_file("triggered.wav")
 
