@@ -9,7 +9,7 @@ from src.utils.recorder import record_audio
 from src.utils.uploader import upload_audio_file
 
 class KeywordWatcher:
-    def __init__(self, model_path="model-ko", rate=16000):
+    def __init__(self, model_path="model-en", rate=16000):
         self.q = queue.Queue()
         self.model = Model(model_path)
         self.recognizer = KaldiRecognizer(self.model, rate)
@@ -30,12 +30,13 @@ class KeywordWatcher:
                 data = self.q.get()
                 if self.recognizer.AcceptWaveform(data):
                     result = json.loads(self.recognizer.Result())
-                    text = result.get("text", "")
+                    text = result.get("text", "").replace(" ", "").lower()
                     print("🎤 인식된 텍스트:", text)
-                    if "닥터필" in text.replace(" ", "").lower():
-                        print("🎯 '닥터필' 감지! 녹음 실행")
+                    if "doctorpill" in text:
+                        print("🎯 'doctorpill' 감지! 녹음 실행")
                         record_audio("triggered.wav")
                         upload_audio_file("triggered.wav")
+
 
     def start(self):
         if self.thread and self.thread.is_alive():

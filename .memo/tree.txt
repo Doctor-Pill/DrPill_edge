@@ -11,3 +11,4 @@ DrPill_edge/
 
 
 pip show python-socketio
+pip install "python-socketio[client]"
