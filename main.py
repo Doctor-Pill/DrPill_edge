@@ -3,7 +3,7 @@ from src.signal.cam_stream import start_video_streaming
 import time
 
 if __name__ == "__main__":
-    watcher = KeywordWatcher()
+    watcher = KeywordWatcher(keywords=["hello", "hey", "doctor", "dr", "pill"])
 
     def on_detected():
         print("📸 영상 전송 시작")

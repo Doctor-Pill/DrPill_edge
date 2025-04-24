@@ -5,14 +5,17 @@ import json
 import threading
 
 class KeywordWatcher:
-    def __init__(self, keyword="닥터필", rate=16000):
-        self.keyword = keyword.lower().replace(" ", "")
-        self.model = vosk.Model("model-en")  # 또는 model-ko
+    def __init__(self, keywords=None, rate=16000):
+        if keywords is None:
+            keywords = ["hello"]
+        self.keywords = [k.lower().replace(" ", "") for k in keywords]
+        self.model = vosk.Model("model-en")
         self.recognizer = vosk.KaldiRecognizer(self.model, rate)
         self.q = queue.Queue()
         self.running = threading.Event()
         self.callback = None
         self.rate = rate
+
 
     def set_callback(self, callback):
         self.callback = callback
@@ -30,8 +33,12 @@ class KeywordWatcher:
                     result = json.loads(self.recognizer.Result())
                     text = result.get("text", "").replace(" ", "").lower()
                     print("🗣 인식된 텍스트:", text)
-                    if self.keyword in text and self.callback:
-                        self.callback()
+
+                    if any(kw in text for kw in self.keywords):
+                        print("🎯 키워드 감지됨!")
+                        if self.callback:
+                            self.callback()
+
 
     def start(self):
         self.running.set()
