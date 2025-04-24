@@ -36,7 +36,7 @@ class KeywordWatcher:
                     
                     if "hello" in text and self.on_start:
                         self.on_start()
-                    elif "bye" in text and self.on_stop:
+                    elif "by" in text and self.on_stop:
                         self.on_stop()
 
     def start(self):

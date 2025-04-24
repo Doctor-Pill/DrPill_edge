@@ -13,15 +13,19 @@ def send_video():
     if not cap.isOpened():
         print("🚫 카메라 열기 실패")
         return
-
+    
+    print("📸 카메라 송신 루프 시작")  # 이거 추가
     try:
         while is_streaming:
             ret, frame = cap.read()
             if not ret:
+                print("🚫 프레임 캡처 실패")
                 continue
             _, buffer = cv2.imencode('.jpg', frame)
             ws.send(buffer.tobytes(), opcode=websocket.ABNF.OPCODE_BINARY)
+            print("➡️ 프레임 전송됨")  # 추가
             time.sleep(0.05)
+
     except Exception as e:
         print(f"❌ 전송 중 오류: {e}")
     finally:
