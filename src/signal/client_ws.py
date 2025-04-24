@@ -1,26 +1,27 @@
-import socketio
-import subprocess
+import websocket
+import threading
 
-sio = socketio.Client()
-
-@sio.event
-def connect():
-    print("🌐 서버에 WebSocket으로 연결되었습니다.")
-
-@sio.event
-def disconnect():
-    print("🔌 서버와의 연결이 끊어졌습니다.")
+ws = None
 
 def connect_to_server():
+    global ws
+
+    def on_open(ws):
+        print("🌐 서버에 WebSocket 연결됨")
+
+    def on_close(ws, close_status_code, close_msg):
+        print("🔌 서버 연결 종료")
+
+    def on_error(ws, error):
+        print(f"❌ WebSocket 오류: {error}")
+
     try:
-        sio.connect("http://192.168.0.10:5000")
-        print("✅ WebSocket 연결 시도 완료")
-
-        # 브라우저도 띄우기 (백그라운드)
-        subprocess.Popen([
-            "chromium-browser", "--kiosk", "http://192.168.0.10:5000", "--no-sandbox"
-        ])
-        print("🌐 브라우저 띄우기 완료")
-
+        ws = websocket.WebSocketApp(
+            "ws://192.168.0.10:8765",
+            on_open=on_open,
+            on_close=on_close,
+            on_error=on_error
+        )
+        threading.Thread(target=ws.run_forever, daemon=True).start()
     except Exception as e:
-        print(f"❌ 서버 접속 실패: {e}")
+        print(f"❌ WebSocket 연결 실패: {e}")

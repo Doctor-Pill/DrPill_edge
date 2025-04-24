@@ -1,8 +1,11 @@
 from src.utils.keyword_watch import KeywordWatcher
 from src.signal.cam_stream import start_video_streaming, stop_video_streaming
 import time
+from src.signal.client_ws import connect_to_server
 
 if __name__ == "__main__":
+    connect_to_server()
+
     watcher = KeywordWatcher()
     watcher.on_start = start_video_streaming
     watcher.on_stop = stop_video_streaming
