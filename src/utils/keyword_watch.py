@@ -23,23 +23,21 @@ class KeywordWatcher:
     def _callback_func(self, indata, frames, time, status):
         self.q.put(bytes(indata))
 
-def _watch_loop(self):
-    with sd.RawInputStream(samplerate=self.rate, blocksize=2000, dtype='int16',
-                           channels=1, callback=self._callback_func):
-        print(f"🎧 음성 명령 대기 중...")
-        while self.running.is_set():
-            data = self.q.get()
-            if self.recognizer.AcceptWaveform(data):
-                result = json.loads(self.recognizer.Result())
-                text = result.get("text", "").replace(" ", "").lower()
-                print("🗣 인식된 텍스트:", text)
-                
-                if "hello" in text and self.on_start:
-                    self.on_start()
-                elif "bye" in text and self.on_stop:
-                    self.on_stop()
-
-
+    def _watch_loop(self):
+        with sd.RawInputStream(samplerate=self.rate, blocksize=2000, dtype='int16',
+                            channels=1, callback=self._callback_func):
+            print(f"🎧 음성 명령 대기 중...")
+            while self.running.is_set():
+                data = self.q.get()
+                if self.recognizer.AcceptWaveform(data):
+                    result = json.loads(self.recognizer.Result())
+                    text = result.get("text", "").replace(" ", "").lower()
+                    print("🗣 인식된 텍스트:", text)
+                    
+                    if "hello" in text and self.on_start:
+                        self.on_start()
+                    elif "bye" in text and self.on_stop:
+                        self.on_stop()
 
     def start(self):
         self.running.set()
