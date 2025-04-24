@@ -26,7 +26,7 @@ class KeywordWatcher:
     def _watch_loop(self):
         with sd.RawInputStream(samplerate=self.rate, blocksize=2000, dtype='int16',
                                channels=1, callback=self._callback_func):
-            print(f"🎧 '{self.keyword}' 감지 대기 중...")
+            print(f"🎧 '{self.keywords}' 감지 대기 중...")
             while self.running.is_set():
                 data = self.q.get()
                 if self.recognizer.AcceptWaveform(data):
