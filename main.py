@@ -1,15 +1,11 @@
 from src.utils.keyword_watch import KeywordWatcher
-from src.signal.cam_stream import start_video_streaming
+from src.signal.cam_stream import start_video_streaming, stop_video_streaming
 import time
 
 if __name__ == "__main__":
-    watcher = KeywordWatcher(keywords=["hello", "hey", "doctor", "dr", "pill"])
-
-    def on_detected():
-        print("📸 영상 전송 시작")
-        start_video_streaming()
-
-    watcher.set_callback(on_detected)
+    watcher = KeywordWatcher()
+    watcher.on_start = start_video_streaming
+    watcher.on_stop = stop_video_streaming
     watcher.start()
 
     try:

@@ -3,32 +3,53 @@ import websocket
 import threading
 import time
 
-def send_video(ws):
+ws = None
+stream_thread = None
+is_streaming = False
+
+def send_video():
+    global is_streaming, ws
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("🚫 카메라 열기 실패")
         return
 
     try:
-        while True:
+        while is_streaming:
             ret, frame = cap.read()
             if not ret:
                 continue
             _, buffer = cv2.imencode('.jpg', frame)
             ws.send(buffer.tobytes(), opcode=websocket.ABNF.OPCODE_BINARY)
-            time.sleep(0.05)  # 20 FPS
+            time.sleep(0.05)
     except Exception as e:
         print(f"❌ 전송 중 오류: {e}")
     finally:
         cap.release()
-        ws.close()
+        if ws:
+            ws.close()
         print("📷 스트리밍 종료됨")
 
 def start_video_streaming():
+    global is_streaming, ws, stream_thread
+    if is_streaming:
+        print("⚠️ 이미 스트리밍 중")
+        return
     try:
         ws = websocket.WebSocket()
         ws.connect("ws://192.168.0.10:8765")
+        is_streaming = True
         print("📡 WebSocket 연결됨")
-        threading.Thread(target=send_video, args=(ws,), daemon=True).start()
+        stream_thread = threading.Thread(target=send_video, daemon=True)
+        stream_thread.start()
     except Exception as e:
-        print(f"❌ WebSocket 연결 실패: {e}")
+        print(f"❌ 연결 실패: {e}")
+        is_streaming = False
+
+def stop_video_streaming():
+    global is_streaming
+    if not is_streaming:
+        print("⚠️ 스트리밍이 시작되지 않았습니다")
+        return
+    is_streaming = False
+    print("🛑 스트리밍 중지 요청됨")
