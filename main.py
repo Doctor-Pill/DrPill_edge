@@ -1,9 +1,14 @@
-from src.camera.camera_streamer import CameraStreamer
+from src.stream.ffmpeg_streamer import start_streaming
 
-# 서버 주소 설정 (워크스테이션 IP)
-SERVER_URL = "http://192.168.0.10:5000"
+def main():
+    process = start_streaming()
 
-# 실행
-if __name__ == '__main__':
-    streamer = CameraStreamer(server_url=SERVER_URL)
-    streamer.run_forever()
+    try:
+        # 스트리밍 유지
+        process.wait()
+    except KeyboardInterrupt:
+        print("\n[INFO] Stopping streaming...")
+        process.terminate()
+
+if __name__ == "__main__":
+    main()
