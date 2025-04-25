@@ -1,13 +1,12 @@
-DrPill_edge/
-├── main.py                         ← 실행 진입점
-├── requirements.txt                ← 필요 패키지 목록
+DRPILL_EDGE/
+├── main.py               # 메인 실행 파일 (엣지)
+├── requirements.txt
 └── src/
-    ├── utils/
-    │   ├── __init__.py
-    │   └── recorder.py            ← 마이크 녹음 함수
-    └── signal/
-        ├── __init__.py
-        └── sender.py              ← `.wav` 파일 서버로 전송
+    ├── config/
+    │   └── settings.py    # 설정 (서버 주소, 포트 등)
+    └── edge/
+        ├── socket_client.py # 서버로 WebSocket 연결 + 명령 수신
+        └── camera_controller.py # ffmpeg 스트리밍 시작/중지 관리
 
 
-pip install websocket-client
+

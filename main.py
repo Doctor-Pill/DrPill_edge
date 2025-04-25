@@ -1,14 +1,7 @@
-from src.stream.ffmpeg_streamer import start_streaming
+# 📍 DRPILL_EDGE/main.py
 
-def main():
-    process = start_streaming()
+from src.edge.socket_client import connect_to_server
 
-    try:
-        # 스트리밍 유지
-        process.wait()
-    except KeyboardInterrupt:
-        print("\n[INFO] Stopping streaming...")
-        process.terminate()
-
+# 메인 실행
 if __name__ == "__main__":
-    main()
+    connect_to_server()
