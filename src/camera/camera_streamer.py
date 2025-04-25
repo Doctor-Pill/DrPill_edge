@@ -1,55 +1,55 @@
-from picamera2 import Picamera2
-import cv2, base64, time
-import numpy as np
+import cv2
+import base64
 import socketio
-from src.config import SERVER_URL
+import time
 
 class CameraStreamer:
-    def __init__(self):
-        self.camera = Picamera2()
-        self.camera.preview_configuration.main.size = (640, 480)
-        self.camera.preview_configuration.main.format = "RGB888"
-        self.camera.configure("preview")
-
-        self.running = False
+    def __init__(self, server_url):
+        self.server_url = server_url
         self.sio = socketio.Client()
-        self._bind_events()
+        self.video_active = False
 
-    def _bind_events(self):
         @self.sio.event
         def connect():
-            print("🔌 서버에 연결됨")
+            print("✅ 서버에 연결됨")
 
         @self.sio.event
         def disconnect():
-            print("🛑 서버와 연결 종료")
+            print("❌ 서버와의 연결 끊김")
 
         @self.sio.on('start_video')
-        def on_start(data=None):
-            print("▶️ 영상 전송 시작 명령 수신")
-            self.running = True
+        def start_video():
+            print("▶️ 영상 시작 신호 수신")
+            self.video_active = True
 
         @self.sio.on('stop_video')
-        def on_stop(data=None):
-            print("⏹️ 영상 전송 중단 명령 수신")
-            self.running = False
+        def stop_video():
+            print("⏹️ 영상 중단 신호 수신")
+            self.video_active = False
 
     def run_forever(self):
-        self.sio.connect(SERVER_URL)
-        self.camera.start()
+        self.sio.connect(self.server_url)
+        cap = cv2.VideoCapture(0)
+
+        if not cap.isOpened():
+            print("🚫 카메라를 열 수 없습니다.")
+            return
+
         try:
             while True:
-                if self.running:
-                    frame = self.camera.capture_array()
-                    encoded = self.encode_frame(frame)
-                    self.sio.emit('video_frame', encoded)
-                time.sleep(0.2)
-        except KeyboardInterrupt:
-            print("🛑 종료 요청")
-        finally:
-            self.camera.stop()
-            self.sio.disconnect()
+                if self.video_active:
+                    ret, frame = cap.read()
+                    if not ret:
+                        continue
 
-    def encode_frame(self, frame: np.ndarray) -> str:
-        _, jpeg = cv2.imencode('.jpg', frame)
-        return base64.b64encode(jpeg.tobytes()).decode('utf-8')
+                    _, buffer = cv2.imencode('.jpg', frame)
+                    jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+                    self.sio.emit('video_frame', jpg_as_text)
+
+                time.sleep(0.2)  # 약 5 fps
+
+        except KeyboardInterrupt:
+            print("🧹 종료됨")
+        finally:
+            cap.release()
+            self.sio.disconnect()

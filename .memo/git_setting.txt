@@ -37,6 +37,8 @@ git push -u origin main
 git push -f origin main
 # 푸시 확인
 git log --oneline --graph
+# force pull
+git fetch && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
 
 
 # 주소 변경
