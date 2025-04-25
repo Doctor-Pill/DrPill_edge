@@ -1,22 +1,18 @@
 import subprocess
-from .config import SERVER_IP, SERVER_PORT, WIDTH, HEIGHT, FRAMERATE, CAMERA_INDEX
+from .config import SERVER_IP, SERVER_PORT, WIDTH, HEIGHT, FRAMERATE
 
 def start_streaming():
     """
-    라즈베리파이의 카메라를 캡처해서 ffmpeg를 통해 서버로 스트리밍하는 함수
+    libcamera-vid + ffmpeg 조합으로 영상 스트리밍 시작
     """
 
-    command = [
-        'ffmpeg',
-        '-f', 'v4l2',              # 비디오 캡처 장치 포맷
-        '-framerate', str(FRAMERATE),
-        '-video_size', f'{WIDTH}x{HEIGHT}',
-        '-i', f'/dev/video{CAMERA_INDEX}',  # 라즈베리파이 카메라 장치
-        '-f', 'mpegts',            # 전송할 포맷: MPEG-TS (빠르고 손쉬움)
-        f'udp://{SERVER_IP}:{SERVER_PORT}'  # UDP로 서버로 전송
-    ]
+    command = (
+        f"libcamera-vid -t 0 --width {WIDTH} --height {HEIGHT} --framerate {FRAMERATE} "
+        f"--inline --codec yuv420 --flush --nopreview -o - | "
+        f"ffmpeg -f rawvideo -pix_fmt yuv420p -s {WIDTH}x{HEIGHT} -r {FRAMERATE} -i - "
+        f"-fflags nobuffer -flags low_delay -f mpegts udp://{SERVER_IP}:{SERVER_PORT}"
+    )
 
-    print(f"[INFO] Starting FFmpeg streaming to udp://{SERVER_IP}:{SERVER_PORT}...")
-    process = subprocess.Popen(command)
-
+    process = subprocess.Popen(command, shell=True, executable='/bin/bash')
+    print(f"[INFO] Streaming to udp://{SERVER_IP}:{SERVER_PORT} with {WIDTH}x{HEIGHT}@{FRAMERATE}fps")
     return process
