@@ -1,15 +1,17 @@
 import subprocess
-from .config import SERVER_IP, SERVER_PORT, WIDTH, HEIGHT, FRAMERATE, BRIGHTNESS, CONTRAST, SHARPNESS, USE_H264
-
+from .config import (
+    SERVER_IP, SERVER_PORT,
+    WIDTH, HEIGHT, FRAMERATE,
+    BRIGHTNESS, CONTRAST, SHARPNESS,
+    USE_H264, FFMPEG_PROBESIZE, FFMPEG_ANALYZE_DURATION
+)
 
 def start_streaming():
     """
-    Pi Camera V3에서 영상을 캡처하고, ffmpeg를 통해 UDP 스트림 전송.
-    설정은 config.py에서 모두 관리.
+    Pi Camera → ffmpeg 송출까지의 초저지연 스트리밍 실행
     """
 
     if USE_H264:
-        # H.264 하드웨어 인코딩 (CPU 부담 적고 화질 좋음)
         camera_cmd = (
             f"libcamera-vid -t 0 "
             f"--width {WIDTH} --height {HEIGHT} --framerate {FRAMERATE} "
@@ -19,12 +21,12 @@ def start_streaming():
         )
 
         ffmpeg_cmd = (
-            f"ffmpeg -f h264 -i - "
+            f"ffmpeg -f h264 -probesize {FFMPEG_PROBESIZE} -analyzeduration {FFMPEG_ANALYZE_DURATION} "
+            f"-i - -fflags nobuffer -flags low_delay "
             f"-f mpegts udp://{SERVER_IP}:{SERVER_PORT}"
         )
 
     else:
-        # raw yuv420 방식 (CPU 부담 크지만 고급 튜닝 가능)
         camera_cmd = (
             f"libcamera-vid -t 0 "
             f"--width {WIDTH} --height {HEIGHT} --framerate {FRAMERATE} "
@@ -34,15 +36,13 @@ def start_streaming():
         )
 
         ffmpeg_cmd = (
-            f"ffmpeg -f rawvideo -pix_fmt yuv420p -s {WIDTH}x{HEIGHT} -r {FRAMERATE} -i - "
-            f"-fflags nobuffer -flags low_delay "
+            f"ffmpeg -f rawvideo -pix_fmt yuv420p -s {WIDTH}x{HEIGHT} -r {FRAMERATE} "
+            f"-probesize {FFMPEG_PROBESIZE} -analyzeduration {FFMPEG_ANALYZE_DURATION} "
+            f"-i - -fflags nobuffer -flags low_delay "
             f"-f mpegts udp://{SERVER_IP}:{SERVER_PORT}"
         )
 
-    # 파이프라인 조합
-    full_command = f"{camera_cmd} | {ffmpeg_cmd}"
-
-    print(f"[INFO] Streaming started → udp://{SERVER_IP}:{SERVER_PORT} ({WIDTH}x{HEIGHT}@{FRAMERATE}fps)")
-    process = subprocess.Popen(full_command, shell=True, executable="/bin/bash")
-
+    full_cmd = f"{camera_cmd} | {ffmpeg_cmd}"
+    print(f"[INFO] Streaming to udp://{SERVER_IP}:{SERVER_PORT} ({WIDTH}x{HEIGHT}@{FRAMERATE}fps)")
+    process = subprocess.Popen(full_cmd, shell=True, executable="/bin/bash")
     return process
