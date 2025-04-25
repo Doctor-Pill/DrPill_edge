@@ -1,10 +1,10 @@
 # 📍 DRPILL_EDGE/src/edge/camera_controller.py
 
 import subprocess
+
 from src.config.settings import SERVER_IP, SERVER_PORT, WIDTH, HEIGHT, FRAMERATE, USE_H264
 
-# 글로벌 변수로 ffmpeg 프로세스를 관리
-streaming_proc = None
+streaming_proc = None  # 글로벌 변수
 
 def start_streaming():
     """
@@ -46,7 +46,8 @@ def start_streaming():
     full_cmd = f"{camera_cmd} | {ffmpeg_cmd}"
 
     print("📸 스트리밍 시작...")
-    streaming_proc = subprocess.Popen(full_cmd, shell=True, executable='/bin/bash')
+    # 🔥 shell=True 대신 명시적으로 bash 호출
+    streaming_proc = subprocess.Popen(["bash", "-c", full_cmd])
 
 def stop_streaming():
     """
@@ -56,7 +57,12 @@ def stop_streaming():
 
     if streaming_proc is not None:
         print("🛑 스트리밍 중단...")
-        streaming_proc.terminate()
+        try:
+            streaming_proc.terminate()
+            streaming_proc.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            print("⛔ 강제 종료 필요 → kill() 실행")
+            streaming_proc.kill()
         streaming_proc = None
     else:
         print("ℹ️ 현재 스트리밍이 진행 중이지 않습니다.")
