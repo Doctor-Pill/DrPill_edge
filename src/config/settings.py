@@ -1,11 +1,8 @@
 # 📍 DrPill_edge/src/config/settings.py
 
-# 서버 연결 설정
 SERVER_IP = '192.168.0.10'
 SERVER_PORT = 5000
-
-# 카메라 기본 설정
-CAMERA_INDEX = 0  # 0번 웹캠 사용
-
-# 서버 WebSocket 주소
 SERVER_URL = f"ws://{SERVER_IP}:{SERVER_PORT}/client"
+
+CAMERA_INDEX = 0  # 0번 USB 웹캠
+USE_PI_CAMERA = False  # Pi Camera 사용할 경우 True로 설정 (향후 확장)

@@ -1,0 +1,14 @@
+DrPill_edge/
+├── main.py
+├── src/
+│   ├── config/
+│   │   └── settings.py
+│   ├── connection/
+│   │   └── socket_client.py
+│   ├── control/
+│   │   ├── camera_controller.py
+│   │   ├── browser_controller.py
+│   │   └── command_handler.py
+│   └── utils/
+│       └── logger.py (선택)
+└── requirements.txt

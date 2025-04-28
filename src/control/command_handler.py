@@ -1,6 +1,12 @@
-# 📍 DrPill_edge/src/control/command_handler.py
+# 📍 command_handler.py
 
-from src.control.camera_controller import start_camera, stop_camera, capture_photo
+from src.control.camera_controller import (
+    open_camera_usb,
+    open_camera_pi,
+    start_streaming,
+    stop_streaming,
+    close_camera
+)
 from src.control.browser_controller import open_browser, close_browser
 
 def handle_command(command):
@@ -8,11 +14,15 @@ def handle_command(command):
         open_browser()
     elif command == "close_browser":
         close_browser()
-    elif command == "start_camera":
-        start_camera()
-    elif command == "stop_camera":
-        stop_camera()
-    elif command == "capture_photo":
-        capture_photo()
+    elif command == "open_camera_usb":
+        open_camera_usb()
+    elif command == "open_camera_pi":
+        open_camera_pi()
+    elif command == "start_streaming":
+        start_streaming()
+    elif command == "stop_streaming":
+        stop_streaming()
+    elif command == "close_camera":
+        close_camera()
     else:
         print(f"⚠️ 알 수 없는 명령: {command}")
