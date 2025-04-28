@@ -1,14 +1,13 @@
 DrPill_edge/
-├── main.py
+├── main.py                # 서버 연결 및 명령 대기
 ├── src/
-│   ├── config/
-│   │   └── settings.py
 │   ├── connection/
-│   │   └── socket_client.py
+│   │   └── socket_client.py   # 서버 연결 코드
 │   ├── control/
-│   │   ├── camera_controller.py
-│   │   ├── browser_controller.py
-│   │   └── command_handler.py
-│   └── utils/
-│       └── logger.py (선택)
-└── requirements.txt
+│   │   ├── camera_controller.py    # 캠 열고 닫기
+│   │   ├── streaming_controller.py # 스트리밍 시작/중단
+│   │   └── browser_controller.py   # 브라우저 오픈/종료
+│   └── command_handler.py          # 서버로부터 받은 명령 처리
+├── requirements.txt
+└── utils/
+    └── helper.py (선택사항)         # 보조 함수들 (필요 시)

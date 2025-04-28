@@ -1,11 +1,10 @@
 # 📍 DrPill_edge/src/connection/socket_client.py
 
 import socketio
-from src.config.settings import SERVER_URL
-from src.control.command_handler import handle_command
-from src.control.browser_controller import close_browser
+from src.command_handler import handle_command
 
-# 비동기 Socket.IO 클라이언트
+SERVER_URL = "http://192.168.0.10:5000"  # 서버 IP 주소 맞춰줘야 함
+
 sio = socketio.Client()
 
 @sio.event
@@ -14,18 +13,17 @@ def connect():
 
 @sio.event
 def disconnect():
-    print("❌ 서버 연결이 끊겼습니다. 브라우저 종료 후 프로그램 종료.")
-    close_browser()
-    exit(0)
+    print("❌ 서버 연결이 끊어졌습니다.")
 
-@sio.on('command')
-def on_command(data):
-    print(f"📩 서버 명령 수신: {data}")
-    handle_command(data)
+@sio.on('server_command')
+def on_server_command(data):
+    command = data.get("command")
+    print(f"📩 서버로부터 명령 수신: {command}")
+    handle_command(command)
 
 def connect_to_server():
     try:
         sio.connect(SERVER_URL)
-        sio.wait()
+        sio.wait()  # 연결 유지
     except Exception as e:
-        print(f"⚠️ 서버 연결 실패: {e}")
+        print(f"❗ 서버 연결 실패: {e}")
