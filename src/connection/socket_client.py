@@ -1,7 +1,7 @@
 # 📍 DrPill_edge/src/connection/socket_client.py
 
 import socketio
-from src.command_handler import handle_command
+from control.command_handler import handle_command
 
 SERVER_URL = "http://192.168.0.10:5000"  # 서버 IP 주소 맞춰줘야 함
 

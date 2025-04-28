@@ -2,7 +2,7 @@
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))  # 🔥 수정!
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 from connection.socket_client import connect_to_server
 from control.browser_controller import open_browser
