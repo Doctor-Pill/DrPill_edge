@@ -15,7 +15,7 @@ def connect():
 def disconnect():
     print("❌ 서버 연결이 끊어졌습니다.")
 
-@sio.on('server_command')
+@sio.on('edge_command')
 def on_server_command(data):
     command = data.get("command")
     print(f"📩 서버로부터 명령 수신: {command}")

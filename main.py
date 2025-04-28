@@ -4,9 +4,21 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
+# 📍 DrPill_edge/main.py
+
 from connection.socket_client import connect_to_server
-from control.browser_controller import open_browser
+from control.browser_controller import open_browser, close_browser
+import atexit
+
+def main():
+    open_browser()
+    atexit.register(cleanup)
+    connect_to_server()
+
+def cleanup():
+    close_browser()
+    from control.camera_controller import cleanup_all
+    cleanup_all()
 
 if __name__ == "__main__":
-    open_browser()
-    connect_to_server()
+    main()
