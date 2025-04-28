@@ -1,4 +1,5 @@
 # 📍 DrPill_edge/src/control/camera_controller.py
+
 import cv2
 import subprocess
 
@@ -31,25 +32,28 @@ def close_cameras():
     if usb_cap is not None:
         usb_cap.release()
         usb_cap = None
-        print("✅ USB 캠 해제")
+        print("✅ USB 캠 해제 완료")
     if picam_cap is not None:
         picam_cap.release()
         picam_cap = None
-        print("✅ PiCam 해제")
+        print("✅ PiCam 해제 완료")
 
 def start_usb_streaming():
     global usb_stream_proc, monitor_proc
     stop_all_streaming()
-    print("🚀 USB캠 송출 시작")
+    print("🚀 USB캠 스트리밍 시작")
+
     usb_stream_proc = subprocess.Popen([
         "ffmpeg",
         "-f", "v4l2",
+        "-input_format", "yuyv422",
         "-framerate", "30",
         "-video_size", "640x480",
         "-i", "/dev/video0",
         "-f", "mpegts",
         "udp://192.168.0.10:5000"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ])
+    # ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     monitor_proc = subprocess.Popen([
         "ffplay",
@@ -58,22 +62,24 @@ def start_usb_streaming():
         "-framedrop",
         "-strict", "experimental",
         "-vf", "setpts=PTS/1.0",
-        "-i", "/dev/video0"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        "/dev/video0"
+    ])
 
 def start_picam_streaming():
     global picam_stream_proc, monitor_proc
     stop_all_streaming()
-    print("🚀 PiCam 송출 시작")
+    print("🚀 PiCam 스트리밍 시작")
+
     picam_stream_proc = subprocess.Popen([
         "ffmpeg",
         "-f", "v4l2",
+        "-input_format", "yuyv422",
         "-framerate", "30",
         "-video_size", "640x480",
         "-i", "/dev/video2",
         "-f", "mpegts",
         "udp://192.168.0.10:5000"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ])
 
     monitor_proc = subprocess.Popen([
         "ffplay",
@@ -82,8 +88,8 @@ def start_picam_streaming():
         "-framedrop",
         "-strict", "experimental",
         "-vf", "setpts=PTS/1.0",
-        "-i", "/dev/video2"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        "/dev/video2"
+    ])
 
 def stop_all_streaming():
     global usb_stream_proc, picam_stream_proc, monitor_proc
