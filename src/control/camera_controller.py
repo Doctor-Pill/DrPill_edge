@@ -47,7 +47,7 @@ def start_usb_streaming():
         "-i", "/dev/video0",
         "-f", "mpegts",
         "udp://192.168.0.10:5000"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ], stdout=subprocess.DEVNULL)
 
     monitor_proc = subprocess.Popen([
         "ffplay",
@@ -55,7 +55,7 @@ def start_usb_streaming():
         "-framerate", "30",
         "-video_size", "640x480",
         "-i", "/dev/video0"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ], stdout=subprocess.DEVNULL)
 
 # PiCam 송출 시작
 def start_picam_streaming():
@@ -72,7 +72,7 @@ def start_picam_streaming():
         "-i", "/dev/video2",
         "-f", "mpegts",
         "udp://192.168.0.10:5000"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ], stdout=subprocess.DEVNULL)
 
     monitor_proc = subprocess.Popen([
         "ffplay",
@@ -80,4 +80,4 @@ def start_picam_streaming():
         "-framerate", "30",
         "-video_size", "640x480",
         "-i", "/dev/video2"
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ], stdout=subprocess.DEVNULL)
