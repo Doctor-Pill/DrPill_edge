@@ -1,13 +1,11 @@
-# 📍 DRPILL_EDGE/src/config/settings.py
+# 📍 DrPill_edge/src/config/settings.py
 
-# 서버 연결 정보
-SERVER_IP = '192.168.0.10'    # 워크스테이션(서버) IP
-SERVER_PORT = 5000            # 워크스테이션(서버) 포트
+# 서버 연결 설정
+SERVER_IP = '192.168.0.10'
+SERVER_PORT = 5000
 
-# 스트리밍 설정
-WIDTH = 1280                 # 영상 가로 해상도1920
-HEIGHT = 720                 # 영상 세로 해상도1080
-FRAMERATE = 30               # 프레임레이트
+# 카메라 기본 설정
+CAMERA_INDEX = 0  # 0번 웹캠 사용
 
-# Pi Camera H264 인코딩 사용 여부
-USE_H264 = True
+# 서버 WebSocket 주소
+SERVER_URL = f"ws://{SERVER_IP}:{SERVER_PORT}/client"

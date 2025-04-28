@@ -1,7 +1,6 @@
-# 📍 DRPILL_EDGE/main.py
+# 📍 DrPill_edge/main.py
 
-from src.edge.socket_client import connect_to_server
+from src.connection.socket_client import connect_to_server
 
-# 메인 실행
 if __name__ == "__main__":
     connect_to_server()

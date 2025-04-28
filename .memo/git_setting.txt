@@ -27,7 +27,7 @@ git config --global user.email "ymhan0724@gmail.com"
 
 # 깃 초기화
 git init
-git remote add origin https://github.com/Doctor-Pill/DrPill-server.git
+git remote add origin https://github.com/Doctor-Pill/DrPill-ege.git
 git config --global credential.helper store
 git add .
 git commit -m "초기 푸시"
