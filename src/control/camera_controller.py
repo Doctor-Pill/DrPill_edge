@@ -39,7 +39,9 @@ def start_usb_streaming():
         "-strict", "experimental",
         "-vf", "scale=640:480",
         "/dev/video0"  # USB캠
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ])
+    # ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
 
     # 서버 송출
     usb_stream_proc = subprocess.Popen([
@@ -50,7 +52,7 @@ def start_usb_streaming():
         "-i", "/dev/video0",
         "-f", "mpegts",
         "udp://192.168.0.10:5000"  # 서버 IP
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ])
 
 def start_picam_streaming():
     global picam_monitor_proc, picam_stream_proc
@@ -67,7 +69,7 @@ def start_picam_streaming():
         "-strict", "experimental",
         "-vf", "scale=640:480",
         "/dev/video2"  # PiCam
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ])
 
     # 서버 송출
     picam_stream_proc = subprocess.Popen([
@@ -78,4 +80,4 @@ def start_picam_streaming():
         "-i", "/dev/video2",
         "-f", "mpegts",
         "udp://192.168.0.10:5000"  # 서버 IP
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    ])
