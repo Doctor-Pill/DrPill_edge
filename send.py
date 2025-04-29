@@ -54,4 +54,4 @@ def capture_and_send(device_path):
 
 # 예시: 웹캠 스트림 시작
 if __name__ == "__main__":
-    capture_and_send(DEVICE_USB)
+    capture_and_send(DEVICE_PI)

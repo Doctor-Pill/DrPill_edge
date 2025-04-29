@@ -1,103 +1,83 @@
 # 📍 DrPill_edge/src/control/camera_controller.py
 
 import cv2
-import subprocess
+import socket
+import threading
 
-usb_stream_proc = None
-picam_stream_proc = None
-monitor_proc = None
-usb_cap = None
-picam_cap = None
+# 설정
+device_usb = "/dev/video0"
+device_pi = "/dev/video2"
+target_ip = "192.168.0.10"
+target_port = 5000
 
-def open_cameras():
-    global usb_cap, picam_cap
-    close_cameras()
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    print("📷 USB 캠 오픈 중...")
-    usb_cap = cv2.VideoCapture(0)
-    if usb_cap.isOpened():
-        print("✅ USB 캠 오픈 성공")
-    else:
-        print("❌ USB 캠 오픈 실패")
+# 스트리밍용 스레드 핸들러
+tx_thread = None
+stop_event = threading.Event()
 
-    print("📷 PiCam 오픈 중...")
-    picam_cap = cv2.VideoCapture(2)
-    if picam_cap.isOpened():
-        print("✅ PiCam 오픈 성공")
-    else:
-        print("❌ PiCam 오픈 실패")
-
-def close_cameras():
-    global usb_cap, picam_cap
-    if usb_cap is not None:
-        usb_cap.release()
-        usb_cap = None
-        print("✅ USB 캠 해제 완료")
-    if picam_cap is not None:
-        picam_cap.release()
-        picam_cap = None
-        print("✅ PiCam 해제 완료")
 
 def start_usb_streaming():
-    global usb_stream_proc, monitor_proc
-    stop_all_streaming()
-    print("🚀 USB캠 스트리밍 시작")
-
-    usb_stream_proc = subprocess.Popen([
-        "ffmpeg",
-        "-f", "v4l2",
-        "-input_format", "yuyv422",
-        "-framerate", "30",
-        "-video_size", "640x480",
-        "-i", "/dev/video0",
-        "-f", "mpegts",
-        "udp://192.168.0.10:5000"
-    ])
-    # ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    monitor_proc = subprocess.Popen([
-        "ffplay",
-        "-fflags", "nobuffer",
-        "-flags", "low_delay",
-        "-framedrop",
-        "-strict", "experimental",
-        "-vf", "setpts=PTS/1.0",
-        "/dev/video0"
-    ])
+    start_streaming(device_usb)
 
 def start_picam_streaming():
-    global picam_stream_proc, monitor_proc
+    start_streaming(device_pi)
+
+def start_streaming(device_path):
+    global tx_thread, stop_event
+
     stop_all_streaming()
-    print("🚀 PiCam 스트리밍 시작")
 
-    picam_stream_proc = subprocess.Popen([
-        "ffmpeg",
-        "-f", "v4l2",
-        "-input_format", "yuyv422",
-        "-framerate", "30",
-        "-video_size", "640x480",
-        "-i", "/dev/video2",
-        "-f", "mpegts",
-        "udp://192.168.0.10:5000"
-    ])
+    stop_event.clear()
 
-    monitor_proc = subprocess.Popen([
-        "ffplay",
-        "-fflags", "nobuffer",
-        "-flags", "low_delay",
-        "-framedrop",
-        "-strict", "experimental",
-        "-vf", "setpts=PTS/1.0",
-        "/dev/video2"
-    ])
+    def streaming_loop():
+        cap = cv2.VideoCapture(device_path)
+        if not cap.isOpened():
+            print(f"❌ 카메라 열기 실패: {device_path}")
+            return
+
+        print(f"✅ 카메라 열림: {device_path}")
+
+        while not stop_event.is_set():
+            ret, frame = cap.read()
+            if not ret:
+                print("⚠️ 프레임 읽기 실패")
+                break
+
+            # 화면 표시
+            cv2.imshow('Camera Stream', frame)
+
+            # 프레임을 인코딩 (jpg 압축)
+            ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            if not ret:
+                continue
+
+            # 서버로 전송
+            data = buffer.tobytes()
+            try:
+                sock.sendto(data, (target_ip, target_port))
+            except Exception as e:
+                print(f"❗ 송신 에러: {e}")
+
+            # 'q' 눌러 종료
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+        print("🛑 카메라 스트리밍 종료")
+
+    tx_thread = threading.Thread(target=streaming_loop)
+    tx_thread.start()
+
 
 def stop_all_streaming():
-    global usb_stream_proc, picam_stream_proc, monitor_proc
-    print("🛑 모든 스트리밍 및 모니터 중단")
-    for proc in [usb_stream_proc, picam_stream_proc, monitor_proc]:
-        if proc:
-            proc.terminate()
-    usb_stream_proc = None
-    picam_stream_proc = None
-    monitor_proc = None
-    close_cameras()
+    global tx_thread, stop_event
+
+    if tx_thread and tx_thread.is_alive():
+        print("🛑 스트리밍 중단 요청")
+        stop_event.set()
+        tx_thread.join()
+
+    tx_thread = None
+    stop_event.clear()
