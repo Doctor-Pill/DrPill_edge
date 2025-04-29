@@ -44,28 +44,26 @@ def start_streaming(device_path):
                 print("⚠️ 프레임 읽기 실패")
                 break
 
-            # 화면 표시
             cv2.imshow('Camera Stream', frame)
 
-            # 프레임을 인코딩 (jpg 압축)
             ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            if not ret:
-                continue
+            if ret:
+                try:
+                    sock.sendto(buffer.tobytes(), (target_ip, target_port))
+                except Exception as e:
+                    print(f"❗ 송신 에러: {e}")
 
-            # 서버로 전송
-            data = buffer.tobytes()
-            try:
-                sock.sendto(data, (target_ip, target_port))
-            except Exception as e:
-                print(f"❗ 송신 에러: {e}")
-
-            # 'q' 눌러 종료
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            # 화면 갱신을 위한 최소한의 waitKey (이벤트 루프)
+            if cv2.waitKey(10) == 27:  # ESC 키를 누르면 수동 종료 (옵션)
+                print("🔴 ESC 키 입력으로 수동 종료")
+                stop_event.set()
                 break
 
+        # 스레드 종료 시 자원 정리
         cap.release()
         cv2.destroyAllWindows()
         print("🛑 카메라 스트리밍 종료")
+
 
     tx_thread = threading.Thread(target=streaming_loop)
     tx_thread.start()
