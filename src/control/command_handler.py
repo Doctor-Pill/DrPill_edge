@@ -7,7 +7,8 @@ from src.control.camera_controller import (
     stop_all_streaming
 )
 
-def handle_command(command):
+def handle_command(command_data):
+    command = command_data.get("command")
     if command == "open_browser":
         open_browser()
     elif command == "close_browser":
