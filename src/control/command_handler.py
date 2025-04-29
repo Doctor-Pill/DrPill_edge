@@ -7,12 +7,8 @@ from src.control.camera_controller import (
     stop_all_streaming
 )
 
-def handle_command(command_data):
-    command = command_data.get("command")
-    print(f"📩 명령 수신: {command}", end="")
-
-    success = True
-
+def handle_command(data):
+    command = data.get("command")
     if command == "open_browser":
         open_browser()
     elif command == "close_browser":
@@ -24,8 +20,4 @@ def handle_command(command_data):
     elif command == "stop_streaming":
         stop_all_streaming()
     else:
-        print(f"=> ⚠️ 알 수 없는 명령")
-        success = False
-
-    if success:
-        print(f"=> ✅ 수행 완료")
+        print(f"⚠️ 알 수 없는 명령: {command}")

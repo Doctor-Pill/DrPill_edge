@@ -32,7 +32,7 @@ def free_device(device_path):
             print(f"⚡ {device_path} 점유 중인 프로세스 {pid} 종료")
             os.kill(int(pid), signal.SIGKILL)
     except subprocess.CalledProcessError:
-        print(f"✅ {device_path}는 점유되지 않음")
+        print(f"⚡ {device_path}는 점유되지 않음")
 
 def start_streaming(device_path):
     global tx_thread, stop_event
