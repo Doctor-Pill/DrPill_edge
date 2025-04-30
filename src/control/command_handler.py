@@ -8,6 +8,7 @@ from src.control.camera_controller import (
 )
 
 def handle_command(data):
+    print(data)
     command = data.get("command")
     if command == "open_browser":
         open_browser()

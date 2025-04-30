@@ -11,3 +11,7 @@ DrPill_edge/
 ├── requirements.txt
 └── utils/
     └── helper.py (선택사항)         # 보조 함수들 (필요 시)
+
+
+sudo pip install "python-socketio[client]" --break-system-packages
+

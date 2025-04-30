@@ -1,3 +1,0 @@
-python-socketio
-opencv-python
-ffmpeg-python

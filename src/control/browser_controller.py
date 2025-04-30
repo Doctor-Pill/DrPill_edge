@@ -15,7 +15,7 @@ def open_browser():
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL)
-        print("🚀 엣지 브라우저 실행 (키오스크 모드)")
+        print("🚀 엣지 브라우저 실행")
     except Exception as e:
         print(f"❌ 브라우저 실행 실패: {e}")
 
