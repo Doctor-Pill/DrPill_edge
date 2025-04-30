@@ -1,10 +1,12 @@
+# 📍 DrPill_edge/src/control/camera_controller.py
+
 import cv2
 import socket
-import threading
 import subprocess
 import os
 import signal
 import time
+import multiprocessing
 
 # ========== 설정 ==========
 TARGET_IP = "192.168.0.10"  # 워크스테이션 IP
@@ -16,10 +18,6 @@ os.environ["DISPLAY"] = ":0"
 
 # ========== 통신 소켓 ==========
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-# ========== 전역 제어 ==========
-tx_thread = None
-stop_event = threading.Event()
 
 # ========== 점유 해제 유틸 ==========
 def free_device(device_path):
@@ -34,7 +32,7 @@ def free_device(device_path):
             try:
                 os.kill(pid, signal.SIGKILL)
                 print(f"⚡ {device_path} 점유 중인 프로세스 {pid} 종료")
-                time.sleep(1)  # 리소스 반납 대기
+                time.sleep(1)
             except Exception as e:
                 print(f"⚠️ 종료 실패: {e}")
     except subprocess.CalledProcessError:
@@ -43,7 +41,7 @@ def free_device(device_path):
 # ========== 카메라 열기 (재시도 포함) ==========
 def try_open_camera(device_path, retries=2):
     for i in range(retries):
-        cap = cv2.VideoCapture(device_path)
+        cap = cv2.VideoCapture(device_path, cv2.CAP_V4L2)
         time.sleep(0.5)
         if cap.isOpened():
             print(f"✅ 카메라 열기 성공: {device_path}")
@@ -54,65 +52,63 @@ def try_open_camera(device_path, retries=2):
     print(f"❌ 카메라 열기 실패: {device_path}")
     return None
 
-# ========== 스트리밍 시작 ==========
+# ========== 스트리밍 루프 (프로세스) ==========
+def streaming_loop(device_path):
+    print("🧪 스트리밍 프로세스 시작")
+    cap = try_open_camera(device_path)
+    if not cap or not cap.isOpened():
+        print("❌ cap 열기 실패 후 루프 종료")
+        return
+
+    cv2.namedWindow("Camera Stream", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("Camera Stream", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("⚠️ 프레임 읽기 실패")
+            break
+
+        frame = cv2.flip(frame, 1)  # 거울 모드
+        cv2.imshow("Camera Stream", frame)
+
+        # 영상 송신
+        try:
+            _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            sock.sendto(buffer.tobytes(), (TARGET_IP, TARGET_PORT))
+        except Exception as e:
+            print(f"❗ 송신 에러: {e}")
+
+        key = cv2.waitKey(1)
+        if key == 27:  # ESC
+            print("🛑 ESC 눌림")
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    for _ in range(5):
+        cv2.waitKey(1)
+    time.sleep(0.5)
+    print("🧊 스트리밍 프로세스 종료")
+
+# ========== 프로세스 관리 ==========
+stream_proc = None
+
 def start_usb_streaming():
-    start_streaming(DEVICE_USB)
+    global stream_proc
+    stop_all_streaming()
+    stream_proc = multiprocessing.Process(target=streaming_loop, args=(DEVICE_USB,))
+    stream_proc.start()
+    print("🚀 USB 스트리밍 시작됨")
 
 def start_picam_streaming():
     print("⚠️ PiCam 스트리밍은 아직 구현되지 않았습니다.")
 
-def start_streaming(device_path):
-    print(device_path, "streaming 해보자~~")
-    global tx_thread, stop_event
-
-    stop_all_streaming()
-    stop_event.clear()
-
-    def streaming_loop():
-        cap = try_open_camera(device_path)
-        if not cap or not cap.isOpened():
-            return
-
-        cv2.namedWindow('Camera Stream', cv2.WND_PROP_FULLSCREEN)
-        cv2.setWindowProperty('Camera Stream', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-
-        print(f"🚀 스트리밍 시작: {device_path}")
-
-        while not stop_event.is_set():
-            ret, frame = cap.read()
-            if not ret:
-                print("⚠️ 프레임 읽기 실패")
-                break
-
-            frame = cv2.flip(frame, 1)
-            frame = cv2.resize(frame, (800, 480))
-            cv2.imshow('Camera Stream', frame)
-
-            ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            if ret:
-                try:
-                    sock.sendto(buffer.tobytes(), (TARGET_IP, TARGET_PORT))
-                except Exception as e:
-                    print(f"❗ 송신 에러: {e}")
-
-            if cv2.waitKey(10) == 27:
-                print("🛑 ESC 키 입력으로 종료")
-                stop_event.set()
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()
-        print("🧊 스트리밍 종료")
-
-    tx_thread = threading.Thread(target=streaming_loop)
-    tx_thread.start()
-
-# ========== 스트리밍 중단 ==========
 def stop_all_streaming():
-    global tx_thread, stop_event
-    if tx_thread and tx_thread.is_alive():
+    global stream_proc
+    if stream_proc and stream_proc.is_alive():
         print("🛑 스트리밍 중단 요청")
-        stop_event.set()
-        tx_thread.join()
-    tx_thread = None
-    stop_event.clear()
+        stream_proc.terminate()
+        stream_proc.join()
+        print("🧹 스트리밍 프로세스 종료됨")
+    stream_proc = None
