@@ -1,29 +1,25 @@
-# 📍 DrPill_edge/src/control/streaming_controller.py
-
 import subprocess
 
-stream_proc = None
+ffmpeg_proc = None
 
-def start_streaming():
-    global stream_proc
-    stop_streaming()
-    try:
-        stream_proc = subprocess.Popen([
-            "ffmpeg",
-            "-f", "v4l2",
-            "-framerate", "30",
-            "-video_size", "640x480",
-            "-i", "/dev/video0",
-            "-f", "mpegts",
-            "udp://192.168.0.10:5000"  # 서버 IP 주소
-        ])
-        print("🚀 스트리밍 시작")
-    except Exception as e:
-        print(f"❌ 스트리밍 시작 실패: {e}")
+def start_mpeg_stream(device_path, port):
+    global ffmpeg_proc
+    stop_mpeg_stream()
+    print(f"📤 FFmpeg 송신 시작: {device_path} → 포트 {port}")
+    ffmpeg_proc = subprocess.Popen([
+        "ffmpeg",
+        "-f", "v4l2",
+        "-i", device_path,
+        "-vcodec", "libx264",
+        "-tune", "zerolatency",
+        "-f", "mpegts",
+        f"udp://192.168.0.10:{port}"
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def stop_streaming():
-    global stream_proc
-    if stream_proc:
-        stream_proc.terminate()
-        stream_proc = None
-        print("🛑 스트리밍 중단")
+def stop_mpeg_stream():
+    global ffmpeg_proc
+    if ffmpeg_proc and ffmpeg_proc.poll() is None:
+        print("🛑 FFmpeg 송신 종료")
+        ffmpeg_proc.terminate()
+        ffmpeg_proc.wait()
+    ffmpeg_proc = None

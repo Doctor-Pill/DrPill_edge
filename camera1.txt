@@ -1,44 +1,34 @@
-# 📍 DrPill_edge/src/control/camera_controller.py
-
-import cv2
-import socket
-import subprocess
 import os
+import cv2
+import subprocess
 import signal
 import time
 import multiprocessing
 
 # ========== 설정 ==========
-TARGET_IP = "192.168.0.10"  # 워크스테이션 IP
-TARGET_PORT = 5000
-DEVICE_USB = "/dev/video0"
+# DEVICE_USB = "/dev/webcam"
+# DEVICE_PICAM = "/dev/picam"
+DEVICE_USB = "/dev/video2"
+DEVICE_PICAM = "/dev/video0"
+MJPEG_SCRIPT = "src/streaming/mjpeg_streamer.py"
+PORT_USB = 8001
+PORT_PICAM = 8002
 
-# 환경 변수 설정 (GUI 디스플레이용)
 os.environ["DISPLAY"] = ":0"
 
-# ========== 통신 소켓 ==========
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-# ========== 점유 해제 유틸 ==========
+# ========== 공통 유틸 ==========
 def free_device(device_path):
-    """다른 프로세스가 카메라 점유 중이면 강제 종료"""
     try:
         result = subprocess.check_output(["fuser", device_path])
         pids = result.decode().strip().split()
         for pid in pids:
-            pid = int(pid)
-            if pid == os.getpid():
-                continue
-            try:
-                os.kill(pid, signal.SIGKILL)
+            if int(pid) != os.getpid():
+                os.kill(int(pid), signal.SIGKILL)
                 print(f"⚡ {device_path} 점유 중인 프로세스 {pid} 종료")
                 time.sleep(1)
-            except Exception as e:
-                print(f"⚠️ 종료 실패: {e}")
     except subprocess.CalledProcessError:
         print(f"✅ {device_path}는 점유되지 않음")
 
-# ========== 카메라 열기 (재시도 포함) ==========
 def try_open_camera(device_path, retries=2):
     for i in range(retries):
         cap = cv2.VideoCapture(device_path, cv2.CAP_V4L2)
@@ -52,9 +42,9 @@ def try_open_camera(device_path, retries=2):
     print(f"❌ 카메라 열기 실패: {device_path}")
     return None
 
-# ========== 스트리밍 루프 (프로세스) ==========
+# ========== 스트리밍 루프 ==========
 def streaming_loop(device_path):
-    print("🧪 스트리밍 프로세스 시작")
+    print("🧪 MJPEG 스트리밍 프로세스 시작")
     cap = try_open_camera(device_path)
     if not cap or not cap.isOpened():
         print("❌ cap 열기 실패 후 루프 종료")
@@ -69,46 +59,56 @@ def streaming_loop(device_path):
             print("⚠️ 프레임 읽기 실패")
             break
 
-        frame = cv2.flip(frame, 1)  # 거울 모드
+        frame = cv2.flip(frame, 1)
         cv2.imshow("Camera Stream", frame)
 
-        # 영상 송신
-        try:
-            _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            sock.sendto(buffer.tobytes(), (TARGET_IP, TARGET_PORT))
-        except Exception as e:
-            print(f"❗ 송신 에러: {e}")
-
+        # 송신은 MJPEG 서버가 처리함
         key = cv2.waitKey(1)
-        if key == 27:  # ESC
+        if key == 27:
             print("🛑 ESC 눌림")
             break
 
     cap.release()
     cv2.destroyAllWindows()
-    for _ in range(5):
-        cv2.waitKey(1)
     time.sleep(0.5)
-    print("🧊 스트리밍 프로세스 종료")
+    print("🧊 스트리밍 루프 종료")
 
 # ========== 프로세스 관리 ==========
 stream_proc = None
+mjpeg_proc = None
+
+def start_streaming(device_path, port, label):
+    global stream_proc, mjpeg_proc
+    stop_all_streaming()
+
+    # MJPEG 서버 시작
+    print(f"🚀 {label} MJPEG 서버 실행")
+    mjpeg_proc = subprocess.Popen(
+        ["python3", MJPEG_SCRIPT, device_path, str(port)],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+
+    # 로컬 스트리밍 루프 (옵션)
+    stream_proc = multiprocessing.Process(target=streaming_loop, args=(device_path,))
+    stream_proc.start()
+    print(f"✅ {label} 로컬 디스플레이 시작")
 
 def start_usb_streaming():
-    global stream_proc
-    stop_all_streaming()
-    stream_proc = multiprocessing.Process(target=streaming_loop, args=(DEVICE_USB,))
-    stream_proc.start()
-    print("🚀 USB 스트리밍 시작됨")
+    start_streaming(DEVICE_USB, PORT_USB, "USB")
 
 def start_picam_streaming():
-    print("⚠️ PiCam 스트리밍은 아직 구현되지 않았습니다.")
+    start_streaming(DEVICE_PICAM, PORT_PICAM, "PiCam")
 
 def stop_all_streaming():
-    global stream_proc
+    global stream_proc, mjpeg_proc
     if stream_proc and stream_proc.is_alive():
-        print("🛑 스트리밍 중단 요청")
+        print("🛑 로컬 스트리밍 중단 요청")
         stream_proc.terminate()
         stream_proc.join()
-        print("🧹 스트리밍 프로세스 종료됨")
     stream_proc = None
+
+    if mjpeg_proc and mjpeg_proc.poll() is None:
+        print("🛑 MJPEG 서버 중단 요청")
+        mjpeg_proc.terminate()
+        mjpeg_proc.wait()
+    mjpeg_proc = None

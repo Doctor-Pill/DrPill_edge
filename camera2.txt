@@ -1,36 +1,22 @@
-# 📁 DrPill_edge/src/control/camera_controller.py
 import os
 import cv2
 import subprocess
 import signal
 import time
 import multiprocessing
-from src.control.streaming_controller import start_mpeg_stream, stop_mpeg_stream
 
 # ========== 설정 ==========
+# DEVICE_USB = "/dev/webcam"
+# DEVICE_PICAM = "/dev/picam"
 DEVICE_USB = "/dev/video2"
 DEVICE_PICAM = "/dev/video0"
 MJPEG_SCRIPT = "src/streaming/mjpeg_streamer.py"
 PORT_USB = 8001
 PORT_PICAM = 8002
 
-PICAM_PREVIEW_COMMAND = [
-    "libcamera-vid",
-    "--fullscreen",
-    "--hflip",
-    "--width", "800",
-    "--height", "480",
-    "-t", "0"
-]
-
 os.environ["DISPLAY"] = ":0"
 
-# ========== 전역 프로세스 ==========
-stream_proc = None
-mjpeg_proc = None
-picam_proc = None
-
-# ========== 유틸 ==========
+# ========== 공통 유틸 ==========
 def free_device(device_path):
     try:
         result = subprocess.check_output(["fuser", device_path])
@@ -56,7 +42,7 @@ def try_open_camera(device_path, retries=2):
     print(f"❌ 카메라 열기 실패: {device_path}")
     return None
 
-# ========== 로컬 스트리밍 루프 ==========
+# ========== 스트리밍 루프 ==========
 def streaming_loop(device_path):
     print("🧪 MJPEG 스트리밍 프로세스 시작")
     cap = try_open_camera(device_path)
@@ -76,7 +62,9 @@ def streaming_loop(device_path):
         frame = cv2.flip(frame, 1)
         cv2.imshow("Camera Stream", frame)
 
-        if cv2.waitKey(1) == 27:
+        # 송신은 MJPEG 서버가 처리함
+        key = cv2.waitKey(1)
+        if key == 27:
             print("🛑 ESC 눌림")
             break
 
@@ -85,65 +73,42 @@ def streaming_loop(device_path):
     time.sleep(0.5)
     print("🧊 스트리밍 루프 종료")
 
-# ========== 스트리밍 시작/중지 ==========
-def start_streaming(device_path, port, label, is_picam=False):
-    global stream_proc, mjpeg_proc, picam_proc
+# ========== 프로세스 관리 ==========
+stream_proc = None
+mjpeg_proc = None
+
+def start_streaming(device_path, port, label):
+    global stream_proc, mjpeg_proc
     stop_all_streaming()
 
+    # MJPEG 서버 시작
     print(f"🚀 {label} MJPEG 서버 실행")
     mjpeg_proc = subprocess.Popen(
         ["python3", MJPEG_SCRIPT, device_path, str(port)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
 
-    if is_picam:
-        print(f"🚀 {label} libcamera 미리보기 실행")
-        picam_proc = subprocess.Popen(
-            PICAM_PREVIEW_COMMAND,
-            env={
-                "DISPLAY": ":0",
-                "XAUTHORITY": f"/home/{os.getlogin()}/.Xauthority",
-                **os.environ
-            }
-        )
-    else:
-        print("🚀 USB 로컬 스트리밍 시작")
-        stream_proc = multiprocessing.Process(target=streaming_loop, args=(device_path,))
-        stream_proc.start()
-
-        print("📤 USB FFmpeg 송신 시작")
-        start_mpeg_stream(device_path, 5001)
-
+    # 로컬 스트리밍 루프 (옵션)
+    stream_proc = multiprocessing.Process(target=streaming_loop, args=(device_path,))
+    stream_proc.start()
+    print(f"✅ {label} 로컬 디스플레이 시작")
 
 def start_usb_streaming():
     start_streaming(DEVICE_USB, PORT_USB, "USB")
 
 def start_picam_streaming():
-    start_streaming(DEVICE_PICAM, PORT_PICAM, "PiCam", is_picam=True)
+    start_streaming(DEVICE_PICAM, PORT_PICAM, "PiCam")
 
 def stop_all_streaming():
-    global stream_proc, mjpeg_proc, picam_proc
-
-    print("🛑 스트리밍 종료 요청")
-
+    global stream_proc, mjpeg_proc
     if stream_proc and stream_proc.is_alive():
+        print("🛑 로컬 스트리밍 중단 요청")
         stream_proc.terminate()
         stream_proc.join()
-        print("🛑 로컬 스트리밍 중단")
     stream_proc = None
 
     if mjpeg_proc and mjpeg_proc.poll() is None:
+        print("🛑 MJPEG 서버 중단 요청")
         mjpeg_proc.terminate()
         mjpeg_proc.wait()
-        print("🛑 MJPEG 서버 중단")
     mjpeg_proc = None
-
-    if picam_proc and picam_proc.poll() is None:
-        picam_proc.terminate()
-        picam_proc.wait()
-        print("🛑 PiCam 미리보기 중단")
-    picam_proc = None
-
-    stop_mpeg_stream()
-    print("🛑 FFmpeg 송신 종료")
