@@ -5,7 +5,7 @@ import signal
 import time
 import multiprocessing
 
-from src.signal import video_streaming  # ✅ SocketIO 영상 송신 모듈
+from src.signal import video_sender  # ✅ SocketIO 프레임 전송용
 
 # ========== 설정 ==========
 DEVICE_USB = "/dev/video2"
@@ -25,7 +25,7 @@ os.environ["DISPLAY"] = ":0"
 # ========== 전역 프로세스 ==========
 stream_proc = None
 picam_proc = None
-socket_proc = None  # ✅ SocketIO 영상 송신 프로세스
+socket_stream_proc = None  # ✅ SocketIO 스트리밍용 프로세스
 
 # ========== 유틸 ==========
 def free_device(device_path):
@@ -84,12 +84,27 @@ def streaming_loop(device_path):
 
 # ========== 스트리밍 시작/중지 ==========
 def start_streaming(device_path, label, is_picam=False):
-    global stream_proc
+    global stream_proc, picam_proc, socket_stream_proc
     stop_all_streaming()
 
-    print(f"🚀 {label} MJPEG 디스플레이 + SocketIO 송신 시작")
-    stream_proc = multiprocessing.Process(target=video_streaming.run, args=(device_path,))
+    print(f"🚀 {label} 로컬 MJPEG 디스플레이 시작")
+    stream_proc = multiprocessing.Process(target=streaming_loop, args=(device_path,))
     stream_proc.start()
+
+    print(f"📤 {label} SocketIO 영상 송신 시작")
+    socket_stream_proc = multiprocessing.Process(target=video_sender.run, args=(device_path,))
+    socket_stream_proc.start()
+
+    if is_picam:
+        print(f"🚀 {label} libcamera 미리보기 실행")
+        picam_proc = subprocess.Popen(
+            PICAM_PREVIEW_COMMAND,
+            env={
+                "DISPLAY": ":0",
+                "XAUTHORITY": f"/home/{os.getlogin()}/.Xauthority",
+                **os.environ
+            }
+        )
 
 def start_usb_streaming():
     start_streaming(DEVICE_USB, "USB")
@@ -98,7 +113,7 @@ def start_picam_streaming():
     start_streaming(DEVICE_PICAM, "PiCam", is_picam=True)
 
 def stop_all_streaming():
-    global stream_proc, picam_proc, socket_proc
+    global stream_proc, picam_proc, socket_stream_proc
 
     print("🛑 스트리밍 종료 요청")
 
@@ -108,16 +123,14 @@ def stop_all_streaming():
         print("🛑 로컬 스트리밍 중단")
     stream_proc = None
 
-    if socket_proc and socket_proc.is_alive():
-        socket_proc.terminate()
-        socket_proc.join()
-        print("🛑 SocketIO 전송 중단")
-    socket_proc = None
+    if socket_stream_proc and socket_stream_proc.is_alive():
+        socket_stream_proc.terminate()
+        socket_stream_proc.join()
+        print("🛑 SocketIO 송신 중단")
+    socket_stream_proc = None
 
     if picam_proc and picam_proc.poll() is None:
         picam_proc.terminate()
         picam_proc.wait()
         print("🛑 PiCam 미리보기 중단")
     picam_proc = None
-
-    print("✅ 모든 프로세스 종료 완료")
