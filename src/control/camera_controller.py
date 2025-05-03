@@ -8,8 +8,8 @@ import multiprocessing
 from src.signal import video_streaming  # ✅ SocketIO 영상 송신 모듈
 
 # ========== 설정 ==========
-DEVICE_USB = "/dev/video2"
-DEVICE_PICAM = "/dev/video0"
+DEVICE_USB = "/dev/video0"
+DEVICE_PICAM = "/dev/video2"
 
 PICAM_PREVIEW_COMMAND = [
     "libcamera-vid",
@@ -88,7 +88,12 @@ def start_streaming(device_path, label, is_picam=False):
     stop_all_streaming()
 
     print(f"🚀 {label} MJPEG 디스플레이 + SocketIO 송신 시작")
-    stream_proc = multiprocessing.Process(target=video_streaming.run, args=(device_path,))
+    # stream_proc = multiprocessing.Process(target=video_streaming.run, args=(device_path,))
+    stream_proc = multiprocessing.Process(
+        target=video_streaming.run,
+        args=(device_path,),
+        kwargs={"is_picam": is_picam}  # USB는 False, PiCam은 True
+    )
     stream_proc.start()
 
 def start_usb_streaming():
@@ -121,3 +126,7 @@ def stop_all_streaming():
     picam_proc = None
 
     print("✅ 모든 프로세스 종료 완료")
+
+def cleanup_all():
+    stop_all_streaming()
+    print("🧹 시스템 종료 전 정리 완료")

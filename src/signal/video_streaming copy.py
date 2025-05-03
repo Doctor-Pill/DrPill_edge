@@ -20,7 +20,6 @@ def run(device_path="/dev/video0", is_picam=False):
     else:
         cap = cv2.VideoCapture(device_path)
 
-    print("➡️ isOpened() 진입")
     if not cap.isOpened():
         print(f"❌ 카메라 열기 실패: {device_path}")
         return
