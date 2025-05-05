@@ -1,6 +1,7 @@
 # 📍 DrPill_edge/src/control/browser_controller.py
 
 import subprocess
+import time
 
 browser_proc = None
 
@@ -11,7 +12,7 @@ def open_browser():
             "chromium-browser",
             "--noerrdialogs",
             "--kiosk",
-            "http://192.168.0.10:5000/client"  # 서버 주소에 맞게
+            "http://192.168.0.10:5000/edge_base"
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL)
@@ -24,7 +25,9 @@ def close_browser():
     if browser_proc:
         try:
             browser_proc.terminate()
-            subprocess.run(["pkill", "-f", "chromium.*kiosk"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["pkill", "-f", "chromium.*kiosk"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
             print("🛑 엣지 브라우저 종료 완료")
         except Exception as e:
             print(f"❌ 브라우저 종료 실패: {e}")

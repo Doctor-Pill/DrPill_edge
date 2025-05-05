@@ -1,6 +1,9 @@
 # 📍 DrPill_edge/src/command_handler.py
 
-from src.control.browser_controller import open_browser, close_browser
+from src.control.browser_controller import (
+    open_browser,
+    close_browser
+)
 from src.control.camera_controller import (
     start_usb_streaming,
     start_picam_streaming,
@@ -10,6 +13,7 @@ from src.control.camera_controller import (
 def handle_command(data):
     print(data)
     command = data.get("command")
+
     if command == "open_browser":
         open_browser()
     elif command == "close_browser":
@@ -20,5 +24,9 @@ def handle_command(data):
         start_picam_streaming()
     elif command == "stop_streaming":
         stop_all_streaming()
+    elif command.startswith("go_to:"):
+        # 예: "go_to:/ready"
+        url = command.split(":", 1)[1]
+        go_to_url(url)
     else:
         print(f"⚠️ 알 수 없는 명령: {command}")
