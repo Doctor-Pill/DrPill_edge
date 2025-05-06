@@ -28,8 +28,8 @@ def operate_servo():
     print("▶️ 서보모터 작동")
     set_angle(60)
     time.sleep(1)
-    set_angle(105)
-    time.sleep(0.5)
+    set_angle(108)
+    time.sleep(1)
     set_angle(60)
     print("✅ 서보모터 작동 완료")
 
@@ -86,13 +86,15 @@ def drop_pill_and_capture(delay_before_servo=1000, delay_after_servo=1000, send=
         send_photo(filename)
     return filename
 
+set_angle(60)
+
 # ========== 실행 예시 ==========
-if __name__ == "__main__":
-    try:
-        drop_pill_and_capture(
-            delay_before_servo=2500,  # 미리보기 후 2.5초 뒤 서보 작동
-            delay_after_servo=2000,   # 서보 작동 후 2초 뒤 사진 촬영
-            send=True
-        )
-    finally:
-        cleanup()
+# if __name__ == "__main__":
+#     try:
+#         drop_pill_and_capture(
+#             delay_before_servo=2500,  # 미리보기 후 2.5초 뒤 서보 작동
+#             delay_after_servo=2000,   # 서보 작동 후 2초 뒤 사진 촬영
+#             send=True
+#         )
+#     finally:
+#         cleanup()
