@@ -8,8 +8,8 @@ import multiprocessing
 from src.signal import video_streaming  # ✅ SocketIO 영상 송신 모듈
 
 # ========== 설정 ==========
-DEVICE_USB = "/dev/video2"
-DEVICE_PICAM = "/dev/video0"
+DEVICE_USB = "/dev/video0"
+DEVICE_PICAM = "/dev/video2"
 
 PICAM_PREVIEW_COMMAND = [
     "libcamera-vid",

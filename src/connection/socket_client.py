@@ -24,3 +24,6 @@ def connect_to_server():
         sio.wait()
     except Exception as e:
         print(f"❗ 서버 연결 실패: {e}")
+
+
+servo_enabled = False  # 전역 플래그

@@ -9,6 +9,7 @@ from src.control.camera_controller import (
     start_picam_streaming,
     stop_all_streaming
 )
+from src.control.pill_drop_and_capture import drop_pill_and_capture
 
 def handle_command(data):
     print(data)
@@ -24,9 +25,12 @@ def handle_command(data):
         start_picam_streaming()
     elif command == "stop_streaming":
         stop_all_streaming()
-    elif command.startswith("go_to:"):
-        # 예: "go_to:/ready"
-        url = command.split(":", 1)[1]
-        go_to_url(url)
+    elif command == "operate_servo":
+        drop_pill_and_capture(
+        delay_before_servo=2500,
+        delay_after_servo=2000,
+        send=False
+    )
+
     else:
         print(f"⚠️ 알 수 없는 명령: {command}")
